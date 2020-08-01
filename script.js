@@ -62,6 +62,8 @@ function setupEventSource(){
         console.log("EventSource failed.");
         // fallback to polling
         setInterval(update, refreshTime * 1000); // update state once every refreshTime seconds
+        // make sure event source is closed
+        eventSource.close();
       };
     eventSource.addEventListener(eventName, onEvent);
     $(window).on('beforeunload', function(){
