@@ -11,7 +11,6 @@ const states = {
     "error": { icon: "error.svg", message: "Ups! Da ist wohl etwas schiefgelaufen!", color: "#aa593d", alt: "Error Symbol" }
 }
 
-const eventSource = new EventSource(spaceApiEventEndpoint);
 
 function setState(state) {
     var stateConfig = states[state];
@@ -48,9 +47,8 @@ function update() {
 }
 
 function onEvent(event){
-    console.log(event.data);
     try {
-        var state = event.data;
+        var state = JSON.parse(event.data);
         validateAndSetState(state);
     }
     catch (ex) {
@@ -58,10 +56,22 @@ function onEvent(event){
     }
 }
 
+function setupEventSource(){
+    const eventSource = new EventSource(spaceApiEventEndpoint);
+    eventSource.onerror = function(err) {
+        console.log("EventSource failed.");
+        // fallback to polling
+        setInterval(update, refreshTime * 1000); // update state once every refreshTime seconds
+      };
+    eventSource.addEventListener(eventName, onEvent);
+    $(window).on('beforeunload', function(){
+        eventSource.close();
+    });
+}
+
 function main() {
     update();
-    eventSource.addEventListener(eventName, onEvent);
-    // setInterval(update, refreshTime * 1000); // update state once every refreshTime seconds
+    setupEventSource();
 }
 
 $(document).ready(main);
